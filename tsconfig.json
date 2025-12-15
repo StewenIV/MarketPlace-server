@@ -17,6 +17,8 @@
     "paths": {
       "@db/*": ["src/db/*"],
       "@entities/*": ["src/entities/*"],
+      "@helpers/*": ["src/helpers/*"],
+      "@consts/*": ["src/consts/*"]
     },
     "incremental": true,
     "skipLibCheck": true,
