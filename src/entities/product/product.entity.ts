@@ -12,10 +12,10 @@ export class Product {
   description: string;
 
   @Column({ name: 'price', type: 'int' })
-  price: number;
+  priceRegular: number;
 
-  @Column({ name: 'price_discounted', type: 'int' })
-  priceDiscounted: number;
+  @Column({ name: 'price_discounted', type: 'int', nullable: true })
+  priceDiscounted?: number;
 
   @Column({ name: 'image', type: 'varchar' })
   image: string;
