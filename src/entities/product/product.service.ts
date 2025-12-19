@@ -24,7 +24,6 @@ export class ProductService {
   }
 
   public async createProduct(productData: any) {
-    console.log('56+565546546464543', productData);
     const newProduct = this.productRepository.create({
       ...productData,
     });

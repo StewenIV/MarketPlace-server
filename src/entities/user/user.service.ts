@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt';
 
 import { User } from './user.entity';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { RegisterUserDto } from './dto/registerUser.dto';
 
 @Injectable()
 export class UserService {
@@ -27,14 +28,19 @@ export class UserService {
     return filteredBody;
   }
 
-  public async createUser(userData: Partial<User>) {
-    const salt = await bcrypt.genSalt(10);
+  public async createUser(userData: RegisterUserDto) {
+    try {
+      const salt = await bcrypt.genSalt(10);
 
-    const newUser = this.userRepository.create({
-      ...userData,
-      password: await bcrypt.hash(userData.password, salt),
-    });
-    return await this.userRepository.save(newUser);
+      const newUser = this.userRepository.create({
+        ...userData,
+        password: await bcrypt.hash(userData.password, salt),
+      });
+      return await this.userRepository.save(newUser);
+    } catch (error) {
+      console.error('Error creating user(in service):', error);
+      return null;
+    }
   }
 
   public async getAllUsers() {
@@ -50,11 +56,17 @@ export class UserService {
     });
   }
 
+  public async getUserByLoginOrEmail(loginOrEmail: string) {
+    return await this.userRepository.findOne({
+      where: [{ login: loginOrEmail }, { email: loginOrEmail }],
+    });
+  }
+
   public async updateUserData(id: number, body: UpdateUserDto) {
     return await this.userRepository.update(id, this.filterFields(body));
   }
 
-    public async deleteUser(id: number) {
-      return await this.userRepository.delete(id);
-    }
-} 
+  public async deleteUser(id: number) {
+    return await this.userRepository.delete(id);
+  }
+}

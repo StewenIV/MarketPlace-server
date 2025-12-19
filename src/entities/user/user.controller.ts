@@ -11,24 +11,81 @@ import {
   Param,
   ParseIntPipe,
   Body,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { LoginUserDto } from './dto/loginUser.dto';
+import { RegisterUserDto } from './dto/registerUser.dto';
+import { compare } from 'bcrypt';
+import { stat } from 'fs';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get('/') 
+  @Get('/')
   async getAllUsers(@Req() req: Request, @Res() res: Response) {
     const users = await this.userService.getAllUsers();
     return res.send({ status: 'ok', data: users });
   }
 
-  @Get('/:id')
+  @Post('/register')
+  async registerUser(@Res() res: Response, @Body() body: RegisterUserDto) {
+    console.log('BODY', body);
+    const result = await this.userService.createUser(body);
+    console.log('RESULT', result);
+    if (!result) {
+      throw new HttpException(
+        {
+          message: 'User registration failed',
+          status: 'error',
+          statusCode: HttpStatus.BAD_REQUEST,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return res.send({ status: 'ok' });
+  }
+
+  @Post('/login')
+  async loginUser(@Res() res: Response, @Body() body: LoginUserDto) {
+    const { loginOrEmail, password } = body;
+
+    const foundUser =
+      await this.userService.getUserByLoginOrEmail(loginOrEmail);
+
+    if (!foundUser) {
+      throw new HttpException(
+        {
+          message: 'User not found',
+          status: 'error',
+          statusCode: HttpStatus.FORBIDDEN,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const isPasswordMatch = await compare(password, foundUser.password);
+    if (!isPasswordMatch) {
+      throw new HttpException(
+        {
+          message: 'Invalid password',
+          status: 'error',
+          statusCode: HttpStatus.FORBIDDEN,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    return res.send({ status: 'ok' });
+  }
+
+  @Get('/id/:id')
   async getUsers(
     @Req() req: Request,
     @Param('id', ParseIntPipe) id: number,
@@ -56,7 +113,10 @@ export class UserController {
   }
 
   @Delete('/:id')
-  async deleteUser(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+  async deleteUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Res() res: Response,
+  ) {
     await this.userService.deleteUser(id);
     return res.send({ status: 'ok' });
   }

@@ -24,4 +24,10 @@ export class User {
 
   @Column({ name: 'gender', type: 'enum', enum: E_Gender, nullable: true })
   gender: E_Gender | null;
+
+  @Column({ name: 'phone', type: 'varchar', nullable: true })
+  phone: string | null;
+
+  @Column({ name: 'login', type: 'varchar', unique: true })
+  login: string;
 }
