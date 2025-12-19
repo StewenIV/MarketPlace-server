@@ -1,13 +1,11 @@
-import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common'
 
 import { TypeOrmModule } from '@db/typeorm.module';
 import { UserModule } from '@entities/user/user.module';
 import { ProductModule } from '@entities/product/product.module';
+import { RedisModule } from '@services/redis/redis.module';
 
 @Module({
-  imports: [
-    TypeOrmModule, 
-    UserModule,
-    ProductModule]
+  imports: [TypeOrmModule, UserModule, ProductModule, RedisModule],
 })
 export class AppModule {}

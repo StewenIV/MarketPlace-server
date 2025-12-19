@@ -29,6 +29,17 @@ services:
       - mw_marketplace
     restart: unless-stopped
 
+  mw_marketplace_redis:
+    container_name: mw_marketplace_redis
+    image: redis:7
+    volumes:
+      - redis:/data
+    ports:
+      - 127.0.0.1:6379:6379
+    networks:
+      - mw_marketplace
+    restart: unless-stopped
+
 networks:
   mw_marketplace:
     driver: bridge
@@ -36,3 +47,4 @@ networks:
 volumes:
   postgres:
   pgadmin:
+  redis:

@@ -17,6 +17,7 @@ import {
 import type { Response, Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { JwtService } from '@nestjs/jwt';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
@@ -26,7 +27,10 @@ import { stat } from 'fs';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @Get('/')
   async getAllUsers(@Req() req: Request, @Res() res: Response) {
@@ -82,7 +86,11 @@ export class UserController {
       );
     }
 
-    return res.send({ status: 'ok' });
+    const jwt = this.jwtService.sign({ x: 1 },
+      { secret: 'sadas', expiresIn: '1h' }
+    );
+
+    return res.send({ status: 'ok', data: { accessToken: jwt } });
   }
 
   @Get('/id/:id')
