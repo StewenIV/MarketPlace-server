@@ -13,36 +13,29 @@ import {
   Body,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { JwtService } from '@nestjs/jwt';
+import { AuthService } from '@services/auth/auth.service';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
 import { RegisterUserDto } from './dto/registerUser.dto';
 import { compare } from 'bcrypt';
-import { stat } from 'fs';
+import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly jwtService: JwtService,
+    private readonly authService: AuthService,
   ) {}
-
-  @Get('/')
-  async getAllUsers(@Req() req: Request, @Res() res: Response) {
-    const users = await this.userService.getAllUsers();
-    return res.send({ status: 'ok', data: users });
-  }
 
   @Post('/register')
   async registerUser(@Res() res: Response, @Body() body: RegisterUserDto) {
-    console.log('BODY', body);
     const result = await this.userService.createUser(body);
-    console.log('RESULT', result);
     if (!result) {
       throw new HttpException(
         {
@@ -53,7 +46,8 @@ export class UserController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    return res.send({ status: 'ok' });
+    console.log('REGISTER RESULT', result);
+    return res.send({ status: 'ok', data: { user: result } });
   }
 
   @Post('/login')
@@ -86,14 +80,12 @@ export class UserController {
       );
     }
 
-    const jwt = this.jwtService.sign({ x: 1 },
-      { secret: 'sadas', expiresIn: '1h' }
-    );
-
+    const jwt = await this.authService.setSession({ userId: foundUser.id });
     return res.send({ status: 'ok', data: { accessToken: jwt } });
   }
 
   @Get('/id/:id')
+  @UseGuards(JwtAuthGuard)
   async getUsers(
     @Req() req: Request,
     @Param('id', ParseIntPipe) id: number,
@@ -103,7 +95,15 @@ export class UserController {
     return res.send({ status: 'ok', data: { userData } });
   }
 
+  @Get('/')
+  @UseGuards(JwtAuthGuard)
+  async getAllUsers(@Req() req: Request, @Res() res: Response) {
+    const users = await this.userService.getAllUsers();
+    return res.send({ status: 'ok', data: users });
+  }
+
   @Post('/')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor(''))
   async createUser(@Req() req: Request, @Res() res: Response) {
     await this.userService.createUser(req.body);
@@ -111,6 +111,7 @@ export class UserController {
   }
 
   @Put('/:id')
+  @UseGuards(JwtAuthGuard)
   async updateUser(
     @Res() res: Response,
     @Param('id', ParseIntPipe) id: number,
@@ -121,6 +122,7 @@ export class UserController {
   }
 
   @Delete('/:id')
+  @UseGuards(JwtAuthGuard)
   async deleteUser(
     @Param('id', ParseIntPipe) id: number,
     @Res() res: Response,

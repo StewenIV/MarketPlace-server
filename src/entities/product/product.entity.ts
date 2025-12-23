@@ -12,7 +12,7 @@ export class Product {
   description: string;
 
   @Column({ name: 'price', type: 'int' })
-  priceRegular: number;
+  price: number;
 
   @Column({ name: 'price_discounted', type: 'int', nullable: true })
   priceDiscounted?: number;
